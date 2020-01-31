@@ -1,7 +1,5 @@
-(ns chess.movement)
-
-(def THRESHOLD [0 7])
-(def EMPTY nil)
+(ns chess.movement
+  (:require '[chess.constants :refer :all]))
 
 (defn- lies-in-range [pos [min-threshold max-threshold]]
   (every? #(<= min-threshold % max-threshold) pos))
@@ -19,40 +17,41 @@
 
 (defn empty-place? [board pos] (nil? (board (twod-1d pos))))
 
-
 (defmulti piece-possible-moves :type)
 
 (defmulti moves-of :type)
 
 (defmethod moves-of :king [piece displacement]
-  (take-while #(lies-in-range %1 THRESHOLD) (possible-move (:pos piece) displacement)))
+  (take-while #(lies-in-range % THRESHOLD) (possible-move (:pos piece) displacement)))
+
+(defmethod moves-of :knight [piece displacement]
+  (take-while #(lies-in-range % THRESHOLD) (possible-move (:pos piece) displacement)))
+
+(defmethod moves-of :pawn [piece displacement]
+  (take-while #(lies-in-range % THRESHOLD) (possible-move (:pos piece) displacement)))
 
 (defmethod moves-of :default [piece displacement]
   (rest
-    (take-while #(lies-in-range %1 THRESHOLD) (possible-moves (:pos piece) displacement))))
+    (take-while #(lies-in-range % THRESHOLD) (possible-moves (:pos piece) displacement))))
 
 
 (defmethod piece-possible-moves [:queen :king] [piece]
-  (map (partial moves-of piece) [[0 1]
-                                 [0 -1]
-                                 [-1 0]
-                                 [1 0]
-                                 [1 1]
-                                 [1 -1]
-                                 [-1 1]
-                                 [-1 -1]]))
+  (map (partial moves-of piece) ALL-DISPLACEMENTS))
 
 (defmethod piece-possible-moves :rook [piece]
-  (map (partial moves-of piece) [[0 1]
-                                 [0 -1]
-                                 [-1 0]
-                                 [1 0]]))
+  (map (partial moves-of piece) ROOK-DISPLACEMENTS))
+
+(defmethod piece-possible-moves :pawn [piece]
+  (let [displacements (cond
+                        (= (:color piece) :black BLACK-PAWN-DISPLACEMENTS)
+                        (= (:color piece) :white) WHITE-PAWN-DISPLACEMENTS)]
+    (map (partial moves-of piece) displacements)))
 
 (defmethod piece-possible-moves :bishop [piece]
-  (map (partial moves-of piece) [[1 1]
-                                 [1 -1]
-                                 [-1 1]
-                                 [-1 -1]]))
+  (map (partial moves-of piece) BISHOP-DISPLACEMENTS))
+
+(defmethod piece-possible-moves :knight [piece]
+  (map (partial moves-of piece) KNIGHT-DISPLACEMENTS))
 
 (def create-board (vec (repeat 64 nil)))
 
