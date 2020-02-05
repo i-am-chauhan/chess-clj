@@ -1,5 +1,6 @@
 (ns chess.movement
-  (:require '[chess.constants :refer :all]))
+  (:require '[chess.constants :refer :all]
+            '[chess.utils :refer :all]))
 
 (defn- lies-in-range [pos [min-threshold max-threshold]]
   (every? #(<= min-threshold % max-threshold) pos))
@@ -17,8 +18,7 @@
 
 (defn empty-place? [board pos] (nil? (board (twod-1d pos))))
 
-(defmulti piece-possible-moves :type)
-
+;******************************************************************
 (defmulti moves-of :type)
 
 (defmethod moves-of :king [piece displacement]
@@ -34,6 +34,8 @@
   (rest
     (take-while #(lies-in-range % THRESHOLD) (possible-moves (:pos piece) displacement))))
 
+;******************************************************************
+(defmulti piece-possible-moves :type)
 
 (defmethod piece-possible-moves [:queen :king] [piece]
   (map (partial moves-of piece) ALL-DISPLACEMENTS))
@@ -53,6 +55,7 @@
 (defmethod piece-possible-moves :knight [piece]
   (map (partial moves-of piece) KNIGHT-DISPLACEMENTS))
 
+;******************************************************************
 (def create-board (vec (repeat 64 nil)))
 
 (defn filter-valid [possible-moves board]
