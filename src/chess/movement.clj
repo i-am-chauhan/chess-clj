@@ -1,6 +1,6 @@
 (ns chess.movement
-  (:require '[chess.constants :refer :all]
-            '[chess.utils :refer :all]))
+  (:require [chess.constants :refer :all]
+            [chess.utils :refer :all]))
 
 (defn- lies-in-range [pos [min-threshold max-threshold]]
   (every? #(<= min-threshold % max-threshold) pos))
@@ -10,11 +10,6 @@
 
 (defn possible-move [pos offset]
   (vector (mapv + pos offset)))
-
-(defn twod-1d [[x y]]
-  (-> y
-      (* 8)
-      (+ x)))
 
 (defn empty-place? [board pos] (nil? (board (twod-1d pos))))
 
@@ -69,10 +64,18 @@
   (map (partial moves-of piece) KNIGHT-DISPLACEMENTS))
 
 ;******************************************************************
-(def create-board (vec (repeat 64 nil)))
 
-(defn filter-valid [piece board x] (->> (take-until (partial empty-place? board) x)
-                                        (remove (partial ally? piece board))))
+(defn filter-valid [piece board moves]
+  (->> moves
+       (take-until (partial empty-place? board))
+       (remove (partial ally? piece board))))
+
+(defn filter-pawn-moves [board moves]
+  (letfn [(pred (partial empty-place? board))]
+    (concat
+      (filter pred (take-last 1 moves))
+      (remove pred (butlast moves)))))
 
 (defn valid-moves [piece board]
-  (mapcat (partial filter-valid piece board) (piece-possible-moves piece)))
+  (cond->> (mapcat (partial filter-valid piece board) (piece-possible-moves piece))
+           (= (:type piece) ::pawn) (filter-pawn-moves board)))
